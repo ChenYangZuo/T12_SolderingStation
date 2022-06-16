@@ -1,0 +1,3 @@
+D:/Project/SolderingStation/2.Software/T12_V1.2/cmake-build-debug/CMakeFiles/T12_V1.2.elf.dir
+D:/Project/SolderingStation/2.Software/T12_V1.2/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/Project/SolderingStation/2.Software/T12_V1.2/cmake-build-debug/CMakeFiles/rebuild_cache.dir
