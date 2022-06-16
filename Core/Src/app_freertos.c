@@ -86,15 +86,11 @@ osThreadId PIDTaskHandle;
 
 /* USER CODE END FunctionPrototypes */
 
-void StartOLEDTask(void const *argument);
-
-void StartBeepTask(void const *argument);
-
-void StartTempTask(void const *argument);
-
-void StartEEPROMTask(void const *argument);
-
-void StartPIDTask(void const *argument);
+void StartOLEDTask(void const * argument);
+void StartBeepTask(void const * argument);
+void StartTempTask(void const * argument);
+void StartEEPROMTask(void const * argument);
+void StartPIDTask(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -104,50 +100,50 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   * @retval None
   */
 void MX_FREERTOS_Init(void) {
-    /* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-    /* USER CODE END Init */
+  /* USER CODE END Init */
 
-    /* USER CODE BEGIN RTOS_MUTEX */
+  /* USER CODE BEGIN RTOS_MUTEX */
     /* add mutexes, ... */
-    /* USER CODE END RTOS_MUTEX */
+  /* USER CODE END RTOS_MUTEX */
 
-    /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
     /* add semaphores, ... */
-    /* USER CODE END RTOS_SEMAPHORES */
+  /* USER CODE END RTOS_SEMAPHORES */
 
-    /* USER CODE BEGIN RTOS_TIMERS */
+  /* USER CODE BEGIN RTOS_TIMERS */
     /* start timers, add new ones, ... */
-    /* USER CODE END RTOS_TIMERS */
+  /* USER CODE END RTOS_TIMERS */
 
-    /* USER CODE BEGIN RTOS_QUEUES */
+  /* USER CODE BEGIN RTOS_QUEUES */
     /* add queues, ... */
-    /* USER CODE END RTOS_QUEUES */
+  /* USER CODE END RTOS_QUEUES */
 
-    /* Create the thread(s) */
-    /* definition and creation of OLEDTask */
-    osThreadDef(OLEDTask, StartOLEDTask, osPriorityLow, 0, 512);
-    OLEDTaskHandle = osThreadCreate(osThread(OLEDTask), NULL);
+  /* Create the thread(s) */
+  /* definition and creation of OLEDTask */
+  osThreadDef(OLEDTask, StartOLEDTask, osPriorityLow, 0, 512);
+  OLEDTaskHandle = osThreadCreate(osThread(OLEDTask), NULL);
 
-    /* definition and creation of BeepTask */
-    osThreadDef(BeepTask, StartBeepTask, osPriorityNormal, 0, 256);
-    BeepTaskHandle = osThreadCreate(osThread(BeepTask), NULL);
+  /* definition and creation of BeepTask */
+  osThreadDef(BeepTask, StartBeepTask, osPriorityNormal, 0, 256);
+  BeepTaskHandle = osThreadCreate(osThread(BeepTask), NULL);
 
-    /* definition and creation of TempTask */
-    osThreadDef(TempTask, StartTempTask, osPriorityNormal, 0, 256);
-    TempTaskHandle = osThreadCreate(osThread(TempTask), NULL);
+  /* definition and creation of TempTask */
+  osThreadDef(TempTask, StartTempTask, osPriorityNormal, 0, 256);
+  TempTaskHandle = osThreadCreate(osThread(TempTask), NULL);
 
-    /* definition and creation of EEPROMTask */
-    osThreadDef(EEPROMTask, StartEEPROMTask, osPriorityHigh, 0, 256);
-    EEPROMTaskHandle = osThreadCreate(osThread(EEPROMTask), NULL);
+  /* definition and creation of EEPROMTask */
+  osThreadDef(EEPROMTask, StartEEPROMTask, osPriorityHigh, 0, 256);
+  EEPROMTaskHandle = osThreadCreate(osThread(EEPROMTask), NULL);
 
-    /* definition and creation of PIDTask */
-    osThreadDef(PIDTask, StartPIDTask, osPriorityRealtime, 0, 256);
-    PIDTaskHandle = osThreadCreate(osThread(PIDTask), NULL);
+  /* definition and creation of PIDTask */
+  osThreadDef(PIDTask, StartPIDTask, osPriorityRealtime, 0, 256);
+  PIDTaskHandle = osThreadCreate(osThread(PIDTask), NULL);
 
-    /* USER CODE BEGIN RTOS_THREADS */
+  /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
-    /* USER CODE END RTOS_THREADS */
+  /* USER CODE END RTOS_THREADS */
 
 }
 
@@ -158,8 +154,9 @@ void MX_FREERTOS_Init(void) {
   * @retval None
   */
 /* USER CODE END Header_StartOLEDTask */
-void StartOLEDTask(void const *argument) {
-    /* USER CODE BEGIN StartOLEDTask */
+void StartOLEDTask(void const * argument)
+{
+  /* USER CODE BEGIN StartOLEDTask */
     u8g2_t u8g2;
     uint8_t space = 0;
     uint8_t pause = 0;
@@ -330,7 +327,7 @@ void StartOLEDTask(void const *argument) {
             osDelay(17);
         }
     }
-    /* USER CODE END StartOLEDTask */
+  /* USER CODE END StartOLEDTask */
 }
 
 /* USER CODE BEGIN Header_StartBeepTask */
@@ -340,8 +337,9 @@ void StartOLEDTask(void const *argument) {
 * @retval None
 */
 /* USER CODE END Header_StartBeepTask */
-void StartBeepTask(void const *argument) {
-    /* USER CODE BEGIN StartBeepTask */
+void StartBeepTask(void const * argument)
+{
+  /* USER CODE BEGIN StartBeepTask */
     /* Infinite loop */
     for (;;) {
         if (Global_Beep) {
@@ -352,7 +350,7 @@ void StartBeepTask(void const *argument) {
         }
         osDelay(1);
     }
-    /* USER CODE END StartBeepTask */
+  /* USER CODE END StartBeepTask */
 }
 
 /* USER CODE BEGIN Header_StartTempTask */
@@ -362,8 +360,9 @@ void StartBeepTask(void const *argument) {
 * @retval None
 */
 /* USER CODE END Header_StartTempTask */
-void StartTempTask(void const *argument) {
-    /* USER CODE BEGIN StartTempTask */
+void StartTempTask(void const * argument)
+{
+  /* USER CODE BEGIN StartTempTask */
     /* Infinite loop */
     for (;;) {
         /* Get Thermocouple Cold Junction Temperature*/
@@ -393,7 +392,7 @@ void StartTempTask(void const *argument) {
 
         osDelay(1000);
     }
-    /* USER CODE END StartTempTask */
+  /* USER CODE END StartTempTask */
 }
 
 /* USER CODE BEGIN Header_StartEEPROMTask */
@@ -403,8 +402,9 @@ void StartTempTask(void const *argument) {
 * @retval None
 */
 /* USER CODE END Header_StartEEPROMTask */
-void StartEEPROMTask(void const *argument) {
-    /* USER CODE BEGIN StartEEPROMTask */
+void StartEEPROMTask(void const * argument)
+{
+  /* USER CODE BEGIN StartEEPROMTask */
     //Read Target Temperature From EEPROM
     uint8_t temp_h, temp_l;
     if (ee24_isConnected()) {
@@ -430,7 +430,7 @@ void StartEEPROMTask(void const *argument) {
         }
         osDelay(100);
     }
-    /* USER CODE END StartEEPROMTask */
+  /* USER CODE END StartEEPROMTask */
 }
 
 /* USER CODE BEGIN Header_StartPIDTask */
@@ -440,8 +440,9 @@ void StartEEPROMTask(void const *argument) {
 * @retval None
 */
 /* USER CODE END Header_StartPIDTask */
-void StartPIDTask(void const *argument) {
-    /* USER CODE BEGIN StartPIDTask */
+void StartPIDTask(void const * argument)
+{
+  /* USER CODE BEGIN StartPIDTask */
     double ADC_Value[5];
     double ADC_vol;
     HAL_ADC_Start(&hadc1);
@@ -478,7 +479,7 @@ void StartPIDTask(void const *argument) {
 
         osDelay(50);
     }
-    /* USER CODE END StartPIDTask */
+  /* USER CODE END StartPIDTask */
 }
 
 /* Private application code --------------------------------------------------*/
