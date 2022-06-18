@@ -44,7 +44,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define DormancyCNT 200
+#define DormancyCNT     200
 
 #define PAGE_HOME       1
 #define PAGE_SETTINGS   2
@@ -56,7 +56,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+void OLED_Return();
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -68,6 +68,7 @@ uint16_t Global_DormancyCNT = 0;
 uint8_t Global_Dormancy = 0;
 uint8_t Global_OLED_SW = 1;
 uint8_t Global_OLED_Pause = 0;
+uint8_t Global_OLED_Index = 0;
 
 double Target_vol;
 double Room_Temp = 0;
@@ -77,21 +78,21 @@ uint16_t Heater_Temp = 0;
 int16_t PWM_DC = 0;
 
 MENU_T menu_lists[] = {
-        {.id=0, .level=1, .text_info="Temperature", .last=&menu_lists[2], .next=&menu_lists[1], .sub_menus=&menu_lists[3], .func=NULL},
-        {.id=1, .level=1, .text_info="Interact"   , .last=&menu_lists[0], .next=&menu_lists[2], .sub_menus=&menu_lists[7], .func=NULL},
-        {.id=2, .level=1, .text_info="Dormancy"   , .last=&menu_lists[1], .next=&menu_lists[0], .sub_menus=&menu_lists[9], .func=NULL},
+        {.id=0, .level=0, .text_info="Temperature", .last=&menu_lists[2], .next=&menu_lists[1], .sub_menus=&menu_lists[3], .func=NULL},
+        {.id=1, .level=0, .text_info="Interact"   , .last=&menu_lists[0], .next=&menu_lists[2], .sub_menus=&menu_lists[7], .func=NULL},
+        {.id=2, .level=0, .text_info="Dormancy"   , .last=&menu_lists[1], .next=&menu_lists[0], .sub_menus=&menu_lists[9], .func=NULL},
 
-        {.id=0, .level=2, .text_info="Return", .next=&menu_lists[4], .sub_menus=&menu_lists[0], .func=NULL},
-        {.id=1, .level=2, .text_info="P"     , .next=&menu_lists[5], .sub_menus=&menu_lists[3], .func=NULL},
-        {.id=2, .level=2, .text_info="I"     , .next=&menu_lists[6], .sub_menus=&menu_lists[3], .func=NULL},
-        {.id=3, .level=2, .text_info="D"     , .next=NULL          , .sub_menus=&menu_lists[3], .func=NULL},
+        {.id=0, .level=1, .text_info="Return",.last=NULL          , .next=&menu_lists[4], .sub_menus=&menu_lists[0], .func=OLED_Return},
+        {.id=1, .level=1, .text_info="P"     ,.last=&menu_lists[3], .next=&menu_lists[5], .sub_menus=&menu_lists[3], .func=NULL},
+        {.id=2, .level=1, .text_info="I"     ,.last=&menu_lists[4], .next=&menu_lists[6], .sub_menus=&menu_lists[3], .func=NULL},
+        {.id=3, .level=1, .text_info="D"     ,.last=&menu_lists[5], .next=NULL          , .sub_menus=&menu_lists[3], .func=NULL},
 
-        {.id=0, .level=2, .text_info="Return", .next=&menu_lists[9], .sub_menus=&menu_lists[0], .func=NULL},
-        {.id=1, .level=2, .text_info="Beep"  , .next=NULL          , .sub_menus=&menu_lists[8], .func=NULL},
+        {.id=0, .level=2, .text_info="Return",.last=NULL          , .next=&menu_lists[8], .sub_menus=&menu_lists[0], .func=OLED_Return},
+        {.id=1, .level=2, .text_info="Beep"  ,.last=&menu_lists[7], .next=NULL          , .sub_menus=&menu_lists[7], .func=NULL},
 
-        {.id=0, .level=2, .text_info="Return", .next=&menu_lists[10], .sub_menus=&menu_lists[0] , .func=NULL},
-        {.id=1, .level=2, .text_info="Time" , .next=&menu_lists[11], .sub_menus=&menu_lists[9] , .func=NULL},
-        {.id=2, .level=2, .text_info="Temp" , .next=NULL           , .sub_menus=&menu_lists[9] , .func=NULL},
+        {.id=0, .level=3, .text_info="Return",.last=NULL          , .next=&menu_lists[10], .sub_menus=&menu_lists[0] , .func=OLED_Return},
+        {.id=1, .level=3, .text_info="Time" ,.last=&menu_lists[9], .next=&menu_lists[11], .sub_menus=&menu_lists[9] , .func=NULL},
+        {.id=2, .level=3, .text_info="Temp" ,.last=&menu_lists[10], .next=NULL          , .sub_menus=&menu_lists[9] , .func=NULL},
 };
 
 MENU_T *Global_menu = &menu_lists[0];
@@ -267,14 +268,48 @@ void StartOLEDTask(void const *argument) {
                 //Flash
                 u8g2_SendBuffer(&u8g2);
                 osDelay(17);
+                break;
             }
             case PAGE_SETTINGS_1:{
+                MENU_T *menu;
+                u8g2_SetFont(&u8g2, u8g2_font_ncenB08_tf);
+                for (menu = &menu_lists[3]; menu; menu = menu->next){
+                    sprintf(buff, "%s", menu->text_info);
+                    u8g2_DrawUTF8(&u8g2, 16, 14*(1+menu->id), buff);
+                    if(menu->id == Global_menu->id){
+                        u8g2_DrawTriangle(&u8g2,3,14*(1+menu->id)-8,3,14*(1+menu->id),6,14*(1+menu->id)-4);
+                    }
+                }
+                u8g2_SendBuffer(&u8g2);
+                osDelay(17);
                 break;
             }
             case PAGE_SETTINGS_2:{
+                MENU_T *menu;
+                u8g2_SetFont(&u8g2, u8g2_font_ncenB08_tf);
+                for (menu = &menu_lists[7]; menu; menu = menu->next){
+                    sprintf(buff, "%s", menu->text_info);
+                    u8g2_DrawUTF8(&u8g2, 16, 14*(1+menu->id), buff);
+                    if(menu->id == Global_menu->id){
+                        u8g2_DrawTriangle(&u8g2,3,14*(1+menu->id)-8,3,14*(1+menu->id),6,14*(1+menu->id)-4);
+                    }
+                }
+                u8g2_SendBuffer(&u8g2);
+                osDelay(17);
                 break;
             }
             case PAGE_SETTINGS_3:{
+                MENU_T *menu;
+                u8g2_SetFont(&u8g2, u8g2_font_ncenB08_tf);
+                for (menu = &menu_lists[9]; menu; menu = menu->next){
+                    sprintf(buff, "%s", menu->text_info);
+                    u8g2_DrawUTF8(&u8g2, 16, 14*(1+menu->id), buff);
+                    if(menu->id == Global_menu->id){
+                        u8g2_DrawTriangle(&u8g2,3,14*(1+menu->id)-8,3,14*(1+menu->id),6,14*(1+menu->id)-4);
+                    }
+                }
+                u8g2_SendBuffer(&u8g2);
+                osDelay(17);
                 break;
             }
             default:{
@@ -368,7 +403,7 @@ void StartEEPROMTask(void const *argument) {
             ee24_write(1, &temp_l, 1, 200);
             Global_WriteEEPROM = 0;
         }
-        osDelay(100);
+        osDelay(10000);
     }
     /* USER CODE END StartEEPROMTask */
 }
@@ -436,6 +471,9 @@ void StartPIDTask(void const *argument) {
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-
+void OLED_Return(){
+    Global_menu = Global_menu->sub_menus;
+    Global_OLED_SW = PAGE_SETTINGS;
+}
 /* USER CODE END Application */
 
