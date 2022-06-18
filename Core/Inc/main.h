@@ -36,7 +36,15 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+typedef struct _menu {
+    int id;                         /**< 打印出的菜单序号 */
+    int level;                      /**< 菜单层级 */
+    char text_info[32];             /**< 打印出的菜单信息 */
+    struct _menu *last;             /**< 同一级菜单中上一条菜单指针 */
+    struct _menu *next;             /**< 同一级菜单中下一条菜单指针 */
+    struct _menu *sub_menus;        /**< 下一级菜单入口 */
+    int (*func)(void);              /**< 当前菜单的响应函数 */
+} MENU_T;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

@@ -31,7 +31,6 @@
 #include "adc.h"
 #include "nst1001.h"
 #include "OLED_u8g2.h"
-//#include "spaceman.h"
 #include "emoji.h"
 #include "icon.h"
 #include "ee24.h"
@@ -40,14 +39,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct _menu {
-    int id;                         /**< 打印出的菜单序号 */
-    int level;                      /**< 菜单层级 */
-    char text_info[32];             /**< 打印出的菜单信息 */
-    struct _menu *next;             /**< 同一级菜单中下一条菜单指针 */
-    struct _menu *sub_menus;        /**< 下一级菜单入口 */
-    int (*func)(void);              /**< 当前菜单的响应函数 */
-} MENU_T;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -76,7 +68,6 @@ uint16_t Global_DormancyCNT = 0;
 uint8_t Global_Dormancy = 0;
 uint8_t Global_OLED_SW = 1;
 uint8_t Global_OLED_Pause = 0;
-int8_t Global_Menu_Index = 0;
 
 double Target_vol;
 double Room_Temp = 0;
@@ -86,9 +77,9 @@ uint16_t Heater_Temp = 0;
 int16_t PWM_DC = 0;
 
 MENU_T menu_lists[] = {
-        {.id=1, .level=1, .text_info="Temperature", .next=&menu_lists[1], .sub_menus=&menu_lists[3], .func=NULL},
-        {.id=2, .level=1, .text_info="Interact"   , .next=&menu_lists[2], .sub_menus=&menu_lists[7], .func=NULL},
-        {.id=3, .level=1, .text_info="Dormancy"   , .next=NULL          , .sub_menus=&menu_lists[9], .func=NULL},
+        {.id=0, .level=1, .text_info="Temperature", .last=&menu_lists[2], .next=&menu_lists[1], .sub_menus=&menu_lists[3], .func=NULL},
+        {.id=1, .level=1, .text_info="Interact"   , .last=&menu_lists[0], .next=&menu_lists[2], .sub_menus=&menu_lists[7], .func=NULL},
+        {.id=2, .level=1, .text_info="Dormancy"   , .last=&menu_lists[1], .next=&menu_lists[0], .sub_menus=&menu_lists[9], .func=NULL},
 
         {.id=0, .level=2, .text_info="Return", .next=&menu_lists[4], .sub_menus=&menu_lists[0], .func=NULL},
         {.id=1, .level=2, .text_info="P"     , .next=&menu_lists[5], .sub_menus=&menu_lists[3], .func=NULL},
@@ -102,6 +93,9 @@ MENU_T menu_lists[] = {
         {.id=1, .level=2, .text_info="Time" , .next=&menu_lists[11], .sub_menus=&menu_lists[9] , .func=NULL},
         {.id=2, .level=2, .text_info="Temp" , .next=NULL           , .sub_menus=&menu_lists[9] , .func=NULL},
 };
+
+MENU_T *Global_menu = &menu_lists[0];
+
 /* USER CODE END Variables */
 osThreadId OLEDTaskHandle;
 osThreadId BeepTaskHandle;
@@ -254,27 +248,15 @@ void StartOLEDTask(void const *argument) {
             }
             case PAGE_SETTINGS:{
                 //Draw Icon
-                u8g2_DrawXBM(&u8g2, 8, 10, 32, 32, Temp_Setting);
-                u8g2_DrawXBM(&u8g2, 48, 10, 32, 32, Interact_Setting);
-                u8g2_DrawXBM(&u8g2, 88, 10, 32, 32, Time_Setting);
-                //Draw String
-                switch (Global_Menu_Index) {
-                    case 0:
-                        sprintf(buff, "Temperature");
-                        break;
-                    case 1:
-                        sprintf(buff, "Interact");
-                        break;
-                    case 2:
-                        sprintf(buff, "Dormancy");
-                        break;
-                    default:
-                        break;
+                for(uint8_t i=0;i<3;i++){
+                    u8g2_DrawXBM(&u8g2, 8+40*i, 10, 32, 32, icons[i]);
                 }
+                //Draw String
+                sprintf(buff,"%s", Global_menu->text_info);
                 u8g2_SetFont(&u8g2, u8g2_font_ncenB08_tf);
                 u8g2_DrawUTF8(&u8g2, (128 - u8g2_GetStrWidth(&u8g2, buff)) / 2, 56, buff);
                 //Draw Selection Box
-                target_X = 8 + Global_Menu_Index * 40;
+                target_X = 8 + Global_menu->id * 40;
                 if (current_X < target_X) {
                     current_X += 4;
                 }
@@ -285,6 +267,15 @@ void StartOLEDTask(void const *argument) {
                 //Flash
                 u8g2_SendBuffer(&u8g2);
                 osDelay(17);
+            }
+            case PAGE_SETTINGS_1:{
+                break;
+            }
+            case PAGE_SETTINGS_2:{
+                break;
+            }
+            case PAGE_SETTINGS_3:{
+                break;
             }
             default:{
                 osDelay(1);

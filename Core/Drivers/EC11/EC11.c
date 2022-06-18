@@ -17,6 +17,7 @@ extern uint8_t Global_WriteEEPROM;
 extern uint8_t Global_Dormancy;
 extern uint16_t Global_DormancyCNT;
 extern int8_t Global_Menu_Index;
+extern MENU_T *Global_menu;
 
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     switch (GPIO_Pin) {
@@ -31,10 +32,7 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
                 }
                 else if(Global_OLED_SW == PAGE_SETTINGS){
                     Global_DormancyCNT = 0;
-                    Global_Menu_Index--;
-                    if(Global_Menu_Index < 0){
-                        Global_Menu_Index += 3;
-                    }
+                    Global_menu = Global_menu->last;
                 }
                 else if(Global_OLED_SW == PAGE_DORMANCY){
                     Global_OLED_SW = 1;
@@ -53,10 +51,7 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
                 }
                 else if(Global_OLED_SW == 2){
                     Global_DormancyCNT = 0;
-                    Global_Menu_Index++;
-                    if(Global_Menu_Index >= 3){
-                        Global_Menu_Index -= 3;
-                    }
+                    Global_menu = Global_menu->next;
                 }
                 else if(Global_OLED_SW == 3){
                     Global_OLED_SW = 1;
@@ -65,7 +60,6 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
                 }
                 Global_Beep = 1;
             }
-            printf("MenuIndex: %d\r\n",Global_Menu_Index);
             break;
         case Handle_SW_Pin:
             LOGGING_I(LOG_LEVEL, "HANDLE");
