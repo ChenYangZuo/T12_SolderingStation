@@ -23,20 +23,20 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
         case EC11_A_Pin:
             // Reverse Rotation
             if (HAL_GPIO_ReadPin(EC11_B_GPIO_Port, EC11_B_Pin) == GPIO_PIN_SET) {
-                if(Global_OLED_SW == 1){
+                if(Global_OLED_SW == PAGE_HOME){
                     Global_DormancyCNT = 0;
                     Target_Temp-=5;
                     Target_vol = (Target_Temp - 29.555) / 53.287;
                     Global_WriteEEPROM = 1;
                 }
-                else if(Global_OLED_SW == 2){
+                else if(Global_OLED_SW == PAGE_SETTINGS){
                     Global_DormancyCNT = 0;
                     Global_Menu_Index--;
                     if(Global_Menu_Index < 0){
                         Global_Menu_Index += 3;
                     }
                 }
-                else if(Global_OLED_SW == 3){
+                else if(Global_OLED_SW == PAGE_DORMANCY){
                     Global_OLED_SW = 1;
                     Global_Dormancy = 0;
                     Global_DormancyCNT = 0;
