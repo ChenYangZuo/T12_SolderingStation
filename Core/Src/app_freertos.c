@@ -44,8 +44,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define DormancyCNT     200
-
 #define PAGE_HOME       1
 #define PAGE_SETTINGS   2
 #define PAGE_DORMANCY   3
@@ -56,19 +54,30 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-void OLED_Return();
+int OLED_Return();
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 enum LOGGING_LEVEL LOG_LEVEL = LOGGING_LEVEL_FATAL;
+uint8_t Global_Beep_Enable = 1;
 uint8_t Global_Beep = 0;
+
 uint8_t Global_WriteEEPROM = 0;
+
+uint16_t Global_Dormancy_Time = 300;
+uint8_t Global_Dormancy_Temp = 150;
 uint16_t Global_DormancyCNT = 0;
 uint8_t Global_Dormancy = 0;
+
 uint8_t Global_OLED_SW = 1;
 uint8_t Global_OLED_Pause = 0;
-uint8_t Global_OLED_Index = 0;
+uint8_t Global_OLED_Input = 0;
+uint8_t Global_OLED_Time = 0;
+
+extern uint8_t Global_PID_P;
+extern uint8_t Global_PID_I;
+extern uint8_t Global_PID_D;
 
 double Target_vol;
 double Room_Temp = 0;
@@ -229,34 +238,34 @@ void StartOLEDTask(void const *argument) {
                     osDelay(1);
                     continue;
                 }
-                //Draw Emoji
+                // Draw Emoji
                 u8g2_DrawXBM(&u8g2, 32, 19, 64, 26, emoji[index]);
-                //Update index
+                // Update index
                 index = direction ? index + 1 : index - 1;
-                //Update direction
+                // Update direction
                 if (index == 9 || index == 0) {
                     direction = !direction;
                 }
-                //Update pause
+                // Update pause
                 Global_OLED_Pause = (index == 0);
-                //Send OLED Buffer
+                // Send OLED Buffer
                 u8g2_SendBuffer(&u8g2);
-                //Delay for Show
+                // Delay for Show
                 delay_time = HAL_GetTick();
-                //Show@100fps
+                // Show@100fps
                 osDelay(10);
                 break;
             }
             case PAGE_SETTINGS:{
-                //Draw Icon
+                // Draw Icon
                 for(uint8_t i=0;i<3;i++){
                     u8g2_DrawXBM(&u8g2, 8+40*i, 10, 32, 32, icons[i]);
                 }
-                //Draw String
+                // Draw String
                 sprintf(buff,"%s", Global_menu->text_info);
                 u8g2_SetFont(&u8g2, u8g2_font_ncenB08_tf);
                 u8g2_DrawUTF8(&u8g2, (128 - u8g2_GetStrWidth(&u8g2, buff)) / 2, 56, buff);
-                //Draw Selection Box
+                // Draw Selection Box
                 target_X = 8 + Global_menu->id * 40;
                 if (current_X < target_X) {
                     current_X += 4;
@@ -265,13 +274,14 @@ void StartOLEDTask(void const *argument) {
                     current_X -= 4;
                 }
                 u8g2_DrawFrame(&u8g2, current_X, 10, 32, 32);
-                //Flash
+                // Flash
                 u8g2_SendBuffer(&u8g2);
                 osDelay(17);
                 break;
             }
             case PAGE_SETTINGS_1:{
                 MENU_T *menu;
+                // Draw Menu items
                 u8g2_SetFont(&u8g2, u8g2_font_ncenB08_tf);
                 for (menu = &menu_lists[3]; menu; menu = menu->next){
                     sprintf(buff, "%s", menu->text_info);
@@ -280,12 +290,21 @@ void StartOLEDTask(void const *argument) {
                         u8g2_DrawTriangle(&u8g2,3,14*(1+menu->id)-8,3,14*(1+menu->id),6,14*(1+menu->id)-4);
                     }
                 }
+                // Draw key value
+                sprintf(buff, "%d", Global_PID_P);
+                u8g2_DrawUTF8(&u8g2, 100, 14*2, buff);
+                sprintf(buff, "%d", Global_PID_I);
+                u8g2_DrawUTF8(&u8g2, 100, 14*3, buff);
+                sprintf(buff, "%d", Global_PID_D);
+                u8g2_DrawUTF8(&u8g2, 100, 14*4, buff);
+                // Send OLED Buffer
                 u8g2_SendBuffer(&u8g2);
                 osDelay(17);
                 break;
             }
             case PAGE_SETTINGS_2:{
                 MENU_T *menu;
+                // Draw Menu items
                 u8g2_SetFont(&u8g2, u8g2_font_ncenB08_tf);
                 for (menu = &menu_lists[7]; menu; menu = menu->next){
                     sprintf(buff, "%s", menu->text_info);
@@ -294,12 +313,22 @@ void StartOLEDTask(void const *argument) {
                         u8g2_DrawTriangle(&u8g2,3,14*(1+menu->id)-8,3,14*(1+menu->id),6,14*(1+menu->id)-4);
                     }
                 }
+                // Draw key value
+                u8g2_SetFont(&u8g2, u8g2_font_unifont_t_symbols);
+                if(Global_Beep_Enable){
+                    u8g2_DrawGlyph(&u8g2,100,28,0x2714);
+                }
+                else{
+                    u8g2_DrawGlyph(&u8g2,100,30,0x2715);
+                }
+                // Send OLED Buffer
                 u8g2_SendBuffer(&u8g2);
                 osDelay(17);
                 break;
             }
             case PAGE_SETTINGS_3:{
                 MENU_T *menu;
+                // Draw Menu items
                 u8g2_SetFont(&u8g2, u8g2_font_ncenB08_tf);
                 for (menu = &menu_lists[9]; menu; menu = menu->next){
                     sprintf(buff, "%s", menu->text_info);
@@ -308,6 +337,12 @@ void StartOLEDTask(void const *argument) {
                         u8g2_DrawTriangle(&u8g2,3,14*(1+menu->id)-8,3,14*(1+menu->id),6,14*(1+menu->id)-4);
                     }
                 }
+                // Draw key value
+                sprintf(buff, "%d", Global_Dormancy_Time);
+                u8g2_DrawUTF8(&u8g2, 100, 14*2, buff);
+                sprintf(buff, "%d", Global_Dormancy_Temp);
+                u8g2_DrawUTF8(&u8g2, 100, 14*3, buff);
+                // Send OLED Buffer
                 u8g2_SendBuffer(&u8g2);
                 osDelay(17);
                 break;
@@ -332,7 +367,7 @@ void StartBeepTask(void const *argument) {
     /* USER CODE BEGIN StartBeepTask */
     /* Infinite loop */
     for (;;) {
-        if (Global_Beep) {
+        if (Global_Beep_Enable && Global_Beep) {
             HAL_TIM_PWM_Start(&htim15, TIM_CHANNEL_1);
             osDelay(100);
             HAL_TIM_PWM_Stop(&htim15, TIM_CHANNEL_1);
@@ -361,11 +396,19 @@ void StartTempTask(void const *argument) {
         if (Global_Dormancy == 0) {
             Global_OLED_Pause = 0;
             printf("Dormancy: %d \r\n",Global_DormancyCNT);
-            if (Global_DormancyCNT > DormancyCNT) {
+            if (Global_DormancyCNT > Global_Dormancy_Time*20) {
                 Global_Dormancy = 1;
                 Global_OLED_SW = 3;
             }
         }
+
+        if(Global_OLED_SW == PAGE_SETTINGS){
+            Global_OLED_Time++;
+            if(Global_OLED_Time > 6){
+                Global_OLED_SW = PAGE_HOME;
+            }
+        }
+
         osDelay(1000);
     }
     /* USER CODE END StartTempTask */
@@ -471,9 +514,10 @@ void StartPIDTask(void const *argument) {
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-void OLED_Return(){
+int OLED_Return(){
     Global_menu = Global_menu->sub_menus;
     Global_OLED_SW = PAGE_SETTINGS;
+    return 0;
 }
 /* USER CODE END Application */
 
